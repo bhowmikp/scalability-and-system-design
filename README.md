@@ -5,7 +5,6 @@
   - **Distributed Cache**: hold data in memory. Not source of truth and can hold limited amount of data(based on size of memory of host)
     - **Memcached**: simple, fast key value storage
     - **Redis**: same as memcached but can do more. Can be set up as a cluster to increase availability and data replication
-- **Database Replication**: frequent, automatic copying of data from a database of one computer or server to a database in another
 - **Database Partition**: division of logical database into distinct independent parts. This is done for manageability, performance or availability reasons, or load balancing.
 - **Performance vs Scalability**
   - Service is scalable if resources added to system results in increased performance in a manner proportional to the resources added.
@@ -45,22 +44,43 @@
     - **Consistency and partition tolerance (CP)**: data is consistent between all nodes, and maintains partition tolerance (preventing data desync) by becoming unavailable when a node goes down. Waiting for a response from a partitioned node might result in a timeout error. CP is good choice if business needs atomic reads and writes. Use: HBase, MongoDB, Redis, MemcacheDB, BigTable-like systems
     - **Availability and Partition Tolerance (AP)**: nodes remain online even if they can't communicate with each other and will resync data once the partition is resolved, but you aren't guaranteed that all nodes will have the same data (either during or after the partition). Responses return the most recent version of the data available on a node, which might not be the latest. Writes might take some tome to propagate when the partition is resolved. AP is a good choice if the business needs allow for eventual consistency or when the system needs to continue working despite external errors. Use: Voldemort, Riak, Cassandra, CouchDB, Dynamo-like systems
     - **Consistency and Availability (CA)**: not possible, it is a software tradeoff. You can choose what to do in the face of a network partition. Nodes remain online even if they can't communicate with each other and will resync data once the partition is resolved, but you aren't guaranteed that all nodes will have the same data (either during or after the partition). Use: Traditional relational databases like PostgreSQL, MySQL, etc.
-- **ACID**: Set of properties of relational databse transactions intended to guarantee validity in the event of errors, power failures, etc.
-  - **Atomicity**: each transaction is all of nothing
-  - **Consistency**: any transaction will bring the database from one valid state to another
-  - **Isolation**: executing transactions concurrently has the same results as if the transactions were executed serially.
-  - **Durability**: guarantees that once a transaction has been committed, it will remain committed even in the case of a system failure (e.g., power outage or crash).
-- **BASE**: set properties of NoSQL database. Basically Available, Soft state, Eventual consistency. BASE system chooses availabilty over consistency.
-  - **Basically available**: gurantees availability
-  - **Soft state**: state of the system may change over time, wven without input
-  - **Eventual consistency**: the system will become consistent over time, given that the system doesn't receive input during that time.
-- **Vertical Scaling**: scale up, add resources to a single node system. Expensive and there is limitation. Ex: SQL
+- **Vertical Scaling**: scale up, add resources to a single node system. Expensive and there is hardware limitation. Ex: SQL
 - **Horizontal Scaling**: scaling out using commodity machines is more cost efficient and results in higher availability than scaling up a single sever on more expensive hardware. Ex: load balancers, NoSQL
   - Disadvantages
     - scaling horizontally introduces complexity and involves cloning servers
       - servers should be stateless: they should not contain any user-related data like sessions or profile pictures
       - sessions can be stored in a centralized data store such as a database (SQL, NoSQL) or a persistent cache (Redis, Memcached)
     - downstream servers such as caches and databases need to handle more simultaneous connections as upstream servers scale out
+- **Database**: organized collection of data
+  - **Relational Database Management System (RDBMS)**: relational database like SQL, Oracle is a collection of data items organized in tables. Highly-structued table organization with rigidly-defined data formats and record structure. Scales vertically, scaling reads difficult, scaling writes nearly impossible.
+    - **ACID**: Set of properties of relational databse transactions intended to guarantee validity in the event of errors, power failures, etc.
+      - **Atomicity**: each transaction is all of nothing
+      - **Consistency**: any transaction will bring the database from one valid state to another
+      - **Isolation**: executing transactions concurrently has the same results as if the transactions were executed serially.
+      - **Durability**: guarantees that once a transaction has been committed, it will remain committed even in the case of a system failure (e.g., power outage or crash).
+    - **Reasons for SQL**: consistent no room for error, structured data, strict schema, relational data, need for complex joins, transactions, lookups by index are fast
+  - **NoSQL**: data items represented in key-value store, document store, wide column store, or graph database. Data is denormalized, and joins are generally done in the application code. Most NoSQL stores lack true ACID transactions in favour of eventual consistency. Scales horizontally and higher availability.
+    - **BASE**: set properties of NoSQL database. Basically Available, Soft state, Eventual consistency. BASE system chooses availabilty over consistency.
+      - **Basically available**: gurantees availability
+      - **Soft state**: state of the system may change over time, wven without input
+      - **Eventual consistency**: the system will become consistent over time, given that the system doesn't receive input during that time.
+    - **Reasons for NoSQL**: budget won't allow large devices and must be put into lower performance devices, datastructures being managed is variable, analyzing large quantities of data in read mode only, non-relational data, no need for complex joins, store many TB (or PB) of data
+      - leaderboard or scoring data, temporary data like shopping cart, lookup tables, frequently accessed tables, log data
+    - **Key-Value Store**
+    - **Document Store**
+    - **Wide Column Store**
+    - **Graph database**
+  - **Techniques to scale database**
+    - **Replication**: frequent, automatic copying of data from a database of one computer or server to a database in another
+      - **Master-slave replication**
+      - **Master-master replication**
+      - **Buddy Replication**: suppress replicating your data to all instances in a cluster. Instead, each instance picks one or more 'buddies' in the cluster, and only replicates to these specific buddies. This greatly helps scalability as there is no longer a memory and network traffic impact every time another instance is added to a cluster.
+        - Benefitial only if a certain data is frequently accessed it is served from one instance rather than a round-robin fashion. Ex: sticky sessions
+    - **Partitioning**
+    - **Sharding**
+    - **Denormalization**
+    - **SQL tuning**
+    - [**More NoSQL patterns**](http://horicky.blogspot.com/2009/11/nosql-patterns.html)
 - **Load Balancer**: distribute incoming client requests to computing resources such as application servers and database. Can be implemented with hardware (expensive) or with software such as HAProxy. It is common to set up multiple load balancers, either in *active-passive* or *active-active* mode. Can help with horizontal scaling, improving performance and availability.
   - Effective at
     - Preventing requests from going to unhealthy servers
@@ -79,7 +99,18 @@
     - **Round robin or weighted round robin**: each server is assigned a value relative to other servers in the pool. This "weight" determines how many more or fewer requests are sent that server's way; compared to other servers in the pools
     - **Layer 4**: looks at *transport layer* from OSI layer model to decide how to distribute requests. Involves source and destination IP addresses, and ports in the header, but not contents of the packet.
     - **Layer 7**: looks at *application layer* from OSI layer model to decide how to distribute requests. This can involve contents of the header, message, and cookies. It can terminate network traffic, read message, make load-balancing decision, then open a connection to the selected server. Layer 4 requires less time and computing resources at the cost of flexibility, but the performance impact is minimal on hardware. Layer 7 is more preferred.
-- **Reverse Proxy (Web Server)**
+- **Reverse Proxy (Web Server)**: web server that centralizes internal services and provides unified interfaces to the public. Requests from clients are forwarded to a server that can fulfill it before the reverse proxy returns the server's response to the client.
+  - Benefits
+    - **Increased security**: hide information about backend servers, blacklist IPs, limit number of connections per client
+    - **Increased scalability and flexibility**: clients only see the reverse proxy's IP, allowing to scale servers or change their configuration
+    - **SSL termination**: decrypt incoming requests and encrypt server responses so backend servers do not have to perform these potentially expensive operations
+    - **Compression**: compress server responses
+    - **Caching**: return the response for cached requests
+    - **Static content**: server static content directly. Ex: html/css/js, photos etc
+  - Disadvantages
+    - results in increased complexity
+    - single proxy is a single point of failure, configuring multiple reverse proxies (ie failover) further increases complexity
+- **Load Balancer vs Reverse Proxy**: load balancer is useful for multiple servers while reverse proxy can be useful with even just one web server or application server
 - **Content Delivery Network (CDN)**: globally distributed network of proxy servers, serving from locations closer to the user. Generally, it is static content such as HTML, CSS, JS, photos, videos, but it can also be dynamic content.
   - Advantages
     - Users receive content from data centers close to them
@@ -120,3 +151,19 @@
 - [Scalability, Availability & Stability Patterns](https://www.slideshare.net/jboner/scalability-availability-stability-patterns)
 - [System Design Interview](https://github.com/checkcheckzz/system-design-interview)
 - [System Design](https://github.com/shashank88/system_design)
+
+## Additional sources to consult
+
+- https://lethain.com/introduction-to-architecting-systems-for-scale/
+- https://www.puncsky.com/blog/2016-02-13-crack-the-system-design-interview
+- Microservices
+- Zookeeper
+- NGINX
+- Web 1.0, 2.0, 3.0
+- Operating system
+- add blockchain to database
+- previous scalability notes
+- general designs
+- tools to know
+- microservices
+- websocket vs polling
