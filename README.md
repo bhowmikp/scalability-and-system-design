@@ -1,12 +1,5 @@
 # System Design and Scalability
 
-- Scaling
-  - **Vertical Scaling**: add resources to a single node system. Expensive and there is limitation
-  - **Horizontal Scaling**: infinite hosts but have to deal with distributed systems. *More preferred*
-- **Load Balancing**: sit in front of service and delegate the client request to one of the nodes behind the services. Could be based on round robin or load of the nodes behind the service. Load balancer has public ip address while the backend has private.
-  - Layer
-    - L4: considers both client and destination ip addresses and port numbers to do routing
-    - L7: uses http uri to do routing. *More common*
 - **Caching**: used to speed up requests. If data is accessed frequently store it there so it can be retrived quickly. Example: user sessions, fully rendered blog articles, activity streams, user<->friend relationships
   - Consider: cache data may be inconsistent, cache data has to be small, eviction policy of cache such as - Least Recently Used (LRU), Least Frequently Used (LFU), Most Recently Used (MRU)
   - **Distributed Cache**: hold data in memory. Not source of truth and can hold limited amount of data(based on size of memory of host)
@@ -18,33 +11,34 @@
   - Service is scalable if resources added to system results in increased performance in a manner proportional to the resources added.
   - Performance problem if system is slow for a single user.
   - Scalability problem if system is fast for a single user but slow under heavy load.
-    - Scale up (vertical scaling), scale out (horizontal scaling)
+    - **Vertical Scaling**: scale up, add resources to a single node system. Expensive and there is limitation
+    - **Horizontal Scaling**: scale out, infinite hosts but have to deal with distributed systems.
 - **Latency vs Throughput**
   - **Latency**: time to perform some action or to produce some result. Latency us measured in units of time - hours, minutes, seconds, nanoseconds, or clock periods.
   - **Throughput**: number of actions or results per unit of time. This is measured in units of whatever is being produced per unit of time.
   - Aim for maximal throughput with acceptable latency.
 - **Availability vs Consistency**
   - **Consistency**: every read receives the most recent write or an error
-    - Weak Consistency: after a write, reads may or may not see it.
+    - **Weak Consistency**: after a write, reads may or may not see it.
       - Seen in systems such as memcached.
       - Works well with use cases like VoIP, video chat, and realtime multiplayer games.
-    - Eventual Consistency: after a write, reads will eventually see it (typically within milliseconds). Data is replicated asynchronously.
+    - **Eventual Consistency**: after a write, reads will eventually see it (typically within milliseconds). Data is replicated asynchronously.
       - Seen in systems with high availability.
       - Works well with use cases such as DNS, email.
       - Amazon S3, SimpleDB
-    - Strong Consistency: after a write, reads will see it. Data is replicated synchronously
+    - **Strong Consistency**: after a write, reads will see it. Data is replicated synchronously
       - Seen in systems that need transactions
       - Seen in file systems and Relational Data Management Systems (RDBMS)
   - **Availability**: every request receives a response, without a guarantee that it contains the most recent version of the information
-    - Fail-over: standby equipment automatically takes over if main system fails. Disadvantages: more hardware and additional complexity, there is a potential for loss of data if the active system fails before any newly written data can be replicated to the passive
-      - Active-passive: heartbeats are sent between active and passive server on standby. If heartbeat is interrupted, the passive server takes over the active's IP address and resumes service.
+    - **Fail-over**: standby equipment automatically takes over if main system fails. Disadvantages: more hardware and additional complexity, there is a potential for loss of data if the active system fails before any newly written data can be replicated to the passive
+      - **Active-passive**: heartbeats are sent between active and passive server on standby. If heartbeat is interrupted, the passive server takes over the active's IP address and resumes service.
         - can also be referred to as master-slave failover.
-      - Active-active: both servers are managing traffic, spreading the load between them.
+      - **Active-active**: both servers are managing traffic, spreading the load between them.
         - can also be referred to as master-master failover.
-    - Replication
-      - Master-slave: master serves reads and write, replicating writes to one or more slaves, which serve only reads. Slaves can also replicate to additional slaves in a tree-like fashion. If the master goes offline, the system can continue to operate in read-only mode until a slave is promoted to a master or a new master is provisioned.
-      - Master-Master: both masters serve reads and writes and collaborate with each other on write. If either master goes down, the system can continue to operate with both reads and writes.
-      - [Buddy Replication](https://access.redhat.com/documentation/en-us/jboss_enterprise_application_platform/4.3/html/cache_tree_cache_guide/clustered_cache___using_replication-buddy_replication): suppress replicating your data to all instances in a cluster. Instead, each instance picks one or more 'buddies' in the cluster, and only replicates to these specific buddies. This greatly helps scalability as there is no longer a memory and network traffic impact every time another instance is added to a cluster.
+    - **Replication**
+      - **Master-slave**: master serves reads and write, replicating writes to one or more slaves, which serve only reads. Slaves can also replicate to additional slaves in a tree-like fashion. If the master goes offline, the system can continue to operate in read-only mode until a slave is promoted to a master or a new master is provisioned.
+      - **Master-Master**: both masters serve reads and writes and collaborate with each other on write. If either master goes down, the system can continue to operate with both reads and writes.
+      - [**Buddy Replication**](https://access.redhat.com/documentation/en-us/jboss_enterprise_application_platform/4.3/html/cache_tree_cache_guide/clustered_cache___using_replication-buddy_replication): suppress replicating your data to all instances in a cluster. Instead, each instance picks one or more 'buddies' in the cluster, and only replicates to these specific buddies. This greatly helps scalability as there is no longer a memory and network traffic impact every time another instance is added to a cluster.
         - Benefitial only if a certain data is frequently accessed it is served from one instance rather than a round-robin fashion. Ex: sticky sessions
   - **Partition Tolerance**: system continues to operate despite arbitrary partitioning due to network failures. Only network failure will cause system to respond incorrectly
   - **Brewer's CAP theorem**. In distributed system only support two of three at any given point in time. In centralized system we don't have network partions, so we can get both availability and consistency.
@@ -60,7 +54,59 @@
   - **Basically available**: gurantees availability
   - **Soft state**: state of the system may change over time, wven without input
   - **Eventual consistency**: the system will become consistent over time, given that the system doesn't receive input during that time.
-- **Domain Name System (DNS)**
+- **Vertical Scaling**: scale up, add resources to a single node system. Expensive and there is limitation. Ex: SQL
+- **Horizontal Scaling**: scaling out using commodity machines is more cost efficient and results in higher availability than scaling up a single sever on more expensive hardware. Ex: load balancers, NoSQL
+  - Disadvantages
+    - scaling horizontally introduces complexity and involves cloning servers
+      - servers should be stateless: they should not contain any user-related data like sessions or profile pictures
+      - sessions can be stored in a centralized data store such as a database (SQL, NoSQL) or a persistent cache (Redis, Memcached)
+    - downstream servers such as caches and databases need to handle more simultaneous connections as upstream servers scale out
+- **Load Balancer**: distribute incoming client requests to computing resources such as application servers and database. Can be implemented with hardware (expensive) or with software such as HAProxy. It is common to set up multiple load balancers, either in *active-passive* or *active-active* mode. Can help with horizontal scaling, improving performance and availability.
+  - Effective at
+    - Preventing requests from going to unhealthy servers
+    - Preventing overloading resources
+    - Helping eliminate single points of failure
+    - **SSL termination**: decrypt incoming requests and encrypt server responses so backed servers do not have to perform these potentially expensive operations
+    - **Session persistence**: issue cookies and route a specific client's requests to same instance if the web apps do not keep track of sessions
+  - Disadvantages
+    - load balancer can become a bottleneck if it does not have enough resources or if it is not configured properly
+    - introducing a load balancer to help eliminate single points of failure results in increased complexity
+    - single load balancer is a single point of failure, configuring multiple load balancers further increases complexity
+  - Can route traffic based on various metrics, including:
+    - **Random**
+    - **Least loaded**
+    - **Session/cookies**
+    - **Round robin or weighted round robin**: each server is assigned a value relative to other servers in the pool. This "weight" determines how many more or fewer requests are sent that server's way; compared to other servers in the pools
+    - **Layer 4**: looks at *transport layer* from OSI layer model to decide how to distribute requests. Involves source and destination IP addresses, and ports in the header, but not contents of the packet.
+    - **Layer 7**: looks at *application layer* from OSI layer model to decide how to distribute requests. This can involve contents of the header, message, and cookies. It can terminate network traffic, read message, make load-balancing decision, then open a connection to the selected server. Layer 4 requires less time and computing resources at the cost of flexibility, but the performance impact is minimal on hardware. Layer 7 is more preferred.
+- **Reverse Proxy (Web Server)**
+- **Content Delivery Network (CDN)**: globally distributed network of proxy servers, serving from locations closer to the user. Generally, it is static content such as HTML, CSS, JS, photos, videos, but it can also be dynamic content.
+  - Advantages
+    - Users receive content from data centers close to them
+    - Servers do not have to serve requests that the CDN fulfills
+  - Disadvantages
+    - CDN cost could be significant depending on traffic
+    - Content might be stale if it is updated before the time-to-live(TTL) expires it.
+    - CDNs require changing URLs for static content to point to the CDN
+  - **Push CDNs**: receive content whenever changes occur on server. You take full responsibility for providing content, uploading directly to CDN, and rewriting URLs to point to CDNS.
+    - Content is uploaded only when it is new or changed, minimizing traffic, but maximizing storage.
+    - Sites with small amount of traffic or sites with content that isn't often updated work well. Content is placed on CDNs once, instead of being re-pulled at regular intervals.
+  - **Pull CDNs**: grab new content from server when the first user requests it. Leave content on the server and rewrite URLs to point to the CDN. Results in slower request until content is cached on the CDN. TTL determines how long content is cached.
+    - Minimize storage space on the CDN, but can create redundant traffic if files expire and are pulled before they have actually changed.
+    - Sites with heavy traffic work well, as traffic is spread out more evenly with only recently-requested content remaining on CDN.
+- **Domain Name System (DNS)**: translates a domain name such as www.example.com to IP address. 
+  - Disadvantages: slight delay, DNS server management could be complex (done by government, ISPs), Denial of Service(DDoS) attack
+  - Services like CloudFlare can route traffics through various methods
+    - [**Weighted round robin**](http://g33kinfo.com/info/archives/2657): each server is assigned a value relative to other servers in the pool. This "weight" determines how many more or fewer requests are sent that server's way; compared to other servers in the pools
+      - Prevent traffic from going to servers under maintenance
+      - Balance between varying cluster sizes
+      - A/B testing
+    - Latency based
+    - Geolocation-based
+  - **NX record (name server)**: specifies the DNS servers for your domain/subdomain
+  - **MX record (mail exchange)**: specifies the mail servers for accepting messages.
+  - **A record (address)**: points a name to an IP address
+  - **CNAME (canonical)**: Points a name to another name, CNAME (example.com to www.example.com) or to an A record
 - **Readundant Array of Independent Disks(RAID)**: assumes there are multiple hard drives.
   - **RAID 0**: segment logically sequential data between 2 hard drives (striping). This decreases write time
   - **RAID 1**: mirror data, write data in two places in parallel. This way even if one drive dies the other can still serve data.
