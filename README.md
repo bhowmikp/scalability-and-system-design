@@ -51,7 +51,7 @@
       - servers should be stateless: they should not contain any user-related data like sessions or profile pictures
       - sessions can be stored in a centralized data store such as a database (SQL, NoSQL) or a persistent cache (Redis, Memcached)
     - downstream servers such as caches and databases need to handle more simultaneous connections as upstream servers scale out
-- **Database**: organized collection of data
+- **Database**: electronic system that allows data to be easily accessed, manipulated, and updated.
   - **Relational Database Management System (RDBMS)**: relational database like SQL, Oracle is a collection of data items organized in tables. Highly-structued table organization with rigidly-defined data formats and record structure. Scales vertically, scaling reads difficult, scaling writes nearly impossible.
     - **ACID**: Set of properties of relational databse transactions intended to guarantee validity in the event of errors, power failures, etc.
       - **Atomicity**: each transaction is all of nothing
@@ -69,16 +69,29 @@
     - **Key-Value Store**
     - **Document Store**
     - **Wide Column Store**
-    - **Graph database**
+    - **Graph Database**
   - **Techniques to scale database**
     - **Replication**: frequent, automatic copying of data from a database of one computer or server to a database in another
-      - **Master-slave replication**
-      - **Master-master replication**
+      - **Master-slave replication**: master serves read and writes, replicating writes to one or more slaves, which serve only reads.Slaves can also replicate to additional slaves in a tree-like fashion. If the master goes offline, the system can continue to operate in read-only mode until a slave is promoted to a master or a new master is provided.
+        - Disadvantages: additional logic is needed to promote a slave to master
+      - **Master-master replication**: both masters serve reads and writes and coordinate with each other on writes. If either master goes down, the system can continue to operate with both reads and writes.
+        - Disadvantages: need a loadbalancer or make changes to application logic to determine where to write, most master-master systems are either loosely consistent (violating ACID) or have increased write latency due to synchronization, conflict resolution comes more into play as more write nodes are added and as latency increases
       - **Buddy Replication**: suppress replicating your data to all instances in a cluster. Instead, each instance picks one or more 'buddies' in the cluster, and only replicates to these specific buddies. This greatly helps scalability as there is no longer a memory and network traffic impact every time another instance is added to a cluster.
         - Benefitial only if a certain data is frequently accessed it is served from one instance rather than a round-robin fashion. Ex: sticky sessions
-    - **Partitioning**
-    - **Sharding**
-    - **Denormalization**
+      - Disadvantages of replication:
+        - potential for loss of data if the msater fails before any newly written data can be replicated to other nodes
+        - since writes are replayed to read replicas they might get bogged down if there are a lot of writes and can't do as many reads
+        - increasing read slaves increases time to replicate which increases replication lag,
+        - replication adds more hardware and additional complexity
+    - **Functional Partitioning**: (or federation) splits up database into several smaller databases by function. Results in less read and write traffic to each smaller database and therefore less replication lag. Smaller databases result in more data that can fit in memory, which result in more cache hits due to improved cache locality. With no single central master serializing writes can be done in parallel, increasing throughput.
+      - Disadvantages: not effective if schema requires huge functions or tables, update application logic to determine which database to read and write, joining two databases is more complex with a server link, partitioning adds more hardware and additional complexity
+    - **Sharding**: distributes data across different databases such that each database can only manage a subset of the data. As data increases more shards are added to the cluster. Common ways to shard a table of users is either through the user's last name initial or the user's geographic location.
+      - **Consistent hashing**: once range of keys are spread across the available nodes, find the right node with the hash code for a key. Performs sharding nicely and elegantly. Reduces the amount of transferred data.
+      - Advantages: less read and write traffic, less replication, and more cache hits. Index size is reduced, which generally improves performance with faster queries. If one shard goes down, the other shards are still operational, although some form of replication needs to be in place to prevent data loss. There is no single central master serializing writes, allowing you to write in parallel with increased throughput.
+      - Disadvantages: application logic needs to be updated to word with shards, this means complex SQL queries. Some shards may deal with more load compared to others, therefore rebalancing needs to be done which adds complexity. Joing data from multiple shards is more complex. Sharding adds more hardware and additional complexity.
+    - **Denormalization**: improves read performance at the expense of write performance. Redundant copies of the data are written in multiple tables to avoid expensive joins.
+      - Advantages: Once data is distributed through partition or sharding, managing data becomes complex. Denormalization might circumvent complex joins. Some read operations may be expensive due to join and this helps circumvent that.
+      - Disadvantages: Generally there are more reads than write. Data is duplicated. Constraints can help redundant copies of information stay in sync, which increases comlexity. Denormalized database under heavy write load might perform worse than its normalized counterpart.
     - **SQL tuning**
     - [**More NoSQL patterns**](http://horicky.blogspot.com/2009/11/nosql-patterns.html)
 - **Load Balancer**: distribute incoming client requests to computing resources such as application servers and database. Can be implemented with hardware (expensive) or with software such as HAProxy. It is common to set up multiple load balancers, either in *active-passive* or *active-active* mode. Can help with horizontal scaling, improving performance and availability.
@@ -163,7 +176,9 @@
 - Operating system
 - add blockchain to database
 - previous scalability notes
-- general designs
+- general designs different companies
+- desgin patterns
 - tools to know
 - microservices
 - websocket vs polling
+- graphql
