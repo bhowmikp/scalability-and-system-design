@@ -5,7 +5,6 @@
   - **Distributed Cache**: hold data in memory. Not source of truth and can hold limited amount of data(based on size of memory of host)
     - **Memcached**: simple, fast key value storage
     - **Redis**: same as memcached but can do more. Can be set up as a cluster to increase availability and data replication
-- **Database Partition**: division of logical database into distinct independent parts. This is done for manageability, performance or availability reasons, or load balancing.
 - **Performance vs Scalability**
   - Service is scalable if resources added to system results in increased performance in a manner proportional to the resources added.
   - Performance problem if system is slow for a single user.
@@ -66,10 +65,29 @@
       - **Eventual consistency**: the system will become consistent over time, given that the system doesn't receive input during that time.
     - **Reasons for NoSQL**: budget won't allow large devices and must be put into lower performance devices, datastructures being managed is variable, analyzing large quantities of data in read mode only, non-relational data, no need for complex joins, store many TB (or PB) of data
       - leaderboard or scoring data, temporary data like shopping cart, lookup tables, frequently accessed tables, log data
-    - **Key-Value Store**
-    - **Document Store**
-    - **Wide Column Store**
-    - **Graph Database**
+    - **Key-Value Store**: O(1) reads and writesand is often backed by memory or SSD.
+      - Abstraction: hash table
+      - High performance and are often used for simple data models or for rapidly-changing data, such as an in-memory cache layer. Since they offer a limited set of operations, complexity is shifted to the application layer if additional operations are needed.
+      - Key-value store is the basis for more compex system such as document store and a graph database.
+      - Key is auto-generated while value can be String, JSON, Blob etc.
+      - Example: Amazon S3
+    - **Document Store**: document store in centered around documents where a document stores all information for a given object. Docuent stores provide APIs or a query language to query based on the internal structure of the document itself.
+      - Abstraction: key-value store with documents stored as values
+      - Documents are organized by collections, tags, metadata, or directories. Although documents can be organized or grouped together, documents may have fields that are completely different from each other
+      - documents stores provide a high flexibility and are often used for working with ocassionally changing data
+      - document data is stored as XML, JSON, binary etc
+      - schema-less, makes adding fields to JSON documents a simple task without having to define changes first
+      - Example: MongoDB, CouchDB, DynamoDB
+    - **Wide Column Store**: basic unit of data is a column (name/value pair). A column can be grouped in column families(analogous to a SQL table). Super column families further group column families. Column families can contain virtually unlimited number of columns that can be created at runtime or the definition of the schema. Each column can be accessed independently with a row key, and columns with the same row key form a row. Each value contains a timestamp for versioning and for conflict resolution.
+      - Abstraction: nested map ColumnFamily<RowKey, Columns<ColKey, Value, Timestamp>>
+      - Offer high availability and high scalability. They are often used for very large data sets.
+      - Example: BigTable, HBase, Cassandra
+    - **Graph Database**: each node is a record and each arc is a relationship between two nodes. Graph databases are optimized to represent complex relationships with many foreign keys or many-to-many relationships.
+      - Abstraction: graph
+      - Offer high performance for data models with complex relationships, such as a social network.
+      - Relatively new and are not yet widely-used; it might be more difficult to find development tools and resources.
+      - Many graphs can only be accessed with REST APIs
+      - Example: Neo4j, FlockDB
   - **Techniques to scale database**
     - **Replication**: frequent, automatic copying of data from a database of one computer or server to a database in another
       - **Master-slave replication**: master serves read and writes, replicating writes to one or more slaves, which serve only reads.Slaves can also replicate to additional slaves in a tree-like fashion. If the master goes offline, the system can continue to operate in read-only mode until a slave is promoted to a master or a new master is provided.
@@ -83,7 +101,7 @@
         - since writes are replayed to read replicas they might get bogged down if there are a lot of writes and can't do as many reads
         - increasing read slaves increases time to replicate which increases replication lag,
         - replication adds more hardware and additional complexity
-    - **Functional Partitioning**: (or federation) splits up database into several smaller databases by function. Results in less read and write traffic to each smaller database and therefore less replication lag. Smaller databases result in more data that can fit in memory, which result in more cache hits due to improved cache locality. With no single central master serializing writes can be done in parallel, increasing throughput.
+    - **Functional Partitioning**: (or federation) splits up database into several smaller databases by function. Results in less read and write traffic to each smaller database and therefore less replication lag. Smaller databases result in more data that can fit in memory, which result in more cache hits due to improved cache locality. With no single central master serializing writes can be done in parallel, increasing throughput. This is done for manageability, performance or availability reasons, or load balancing.
       - Disadvantages: not effective if schema requires huge functions or tables, update application logic to determine which database to read and write, joining two databases is more complex with a server link, partitioning adds more hardware and additional complexity
     - **Sharding**: distributes data across different databases such that each database can only manage a subset of the data. As data increases more shards are added to the cluster. Common ways to shard a table of users is either through the user's last name initial or the user's geographic location.
       - **Consistent hashing**: once range of keys are spread across the available nodes, find the right node with the hash code for a key. Performs sharding nicely and elegantly. Reduces the amount of transferred data.
@@ -92,7 +110,26 @@
     - **Denormalization**: improves read performance at the expense of write performance. Redundant copies of the data are written in multiple tables to avoid expensive joins.
       - Advantages: Once data is distributed through partition or sharding, managing data becomes complex. Denormalization might circumvent complex joins. Some read operations may be expensive due to join and this helps circumvent that.
       - Disadvantages: Generally there are more reads than write. Data is duplicated. Constraints can help redundant copies of information stay in sync, which increases comlexity. Denormalized database under heavy write load might perform worse than its normalized counterpart.
-    - **SQL tuning**
+    - **SQL tuning**: need to benchmark and profile to simulate and uncover bottlenecks.
+      - **Benchmark**: simulate high-load situations with tools such as *ab*. **Profile**: enable tools such as the *slow query log* to help track performance issues. Optimizations that can be done with benchmark and profiling are
+        - **Tighten up the schema**
+          - MySQL dumps to disk in contiguous blocks for fast access
+          - Use *CHAR* instead of *VARCHAR* for fixed-length fields
+          - Use *TEXT* for large blocks of text such as blog posts. *TEXT* also allows for boolean searches. Using a *TEXT* field results in storing a pointer on a disk that is used to locate the text block.
+          - Use *INT* for larger numbers up to 2^32 or 4 billion
+          - Use *DECIMAL* for currency to avoid floating point representation errors.
+          - Avoid storing large *BLOBS*, store the location of where to get the object instead
+          - *VARCHAR(255)* is the largest number of characters that can be counted in a 8 bit number, often maximizing the use of a byte in some RDBMS.
+          - Set the *NOT NULL* constraint where applicable to improve search performance.
+        - **Use good indices**
+          - columns that are being queried could be faster with indices
+          - indices are usually represented as self-balancing B-tree that keeps data sorted and allows searches, sequential access, insertions, and deletions in logarithmic time
+          - placing an index can keep the data in memory, requiring more space
+          - writes could also be slower since the index also needs to be updated
+          - when loading large amounts of data, it might be faster to disable indices, load the data, then rebuild the indices
+        - **Avoid expensive joins**: denormalize where performance demands it
+        - **Partition tables**: break up a table by putting hot spots in a seperate table to help keep it in memory.
+        - **Tune the query cache**: in some cases the query cache could lead to performance issues.
     - [**More NoSQL patterns**](http://horicky.blogspot.com/2009/11/nosql-patterns.html)
 - **Load Balancer**: distribute incoming client requests to computing resources such as application servers and database. Can be implemented with hardware (expensive) or with software such as HAProxy. It is common to set up multiple load balancers, either in *active-passive* or *active-active* mode. Can help with horizontal scaling, improving performance and availability.
   - Effective at
@@ -182,3 +219,5 @@
 - microservices
 - websocket vs polling
 - graphql
+- redis
+- memcached
