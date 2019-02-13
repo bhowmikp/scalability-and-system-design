@@ -1,10 +1,5 @@
 # System Design and Scalability
 
-- **Caching**: used to speed up requests. If data is accessed frequently store it there so it can be retrived quickly. Example: user sessions, fully rendered blog articles, activity streams, user<->friend relationships
-  - Consider: cache data may be inconsistent, cache data has to be small, eviction policy of cache such as - Least Recently Used (LRU), Least Frequently Used (LFU), Most Recently Used (MRU)
-  - **Distributed Cache**: hold data in memory. Not source of truth and can hold limited amount of data(based on size of memory of host)
-    - **Memcached**: simple, fast key value storage
-    - **Redis**: same as memcached but can do more. Can be set up as a cluster to increase availability and data replication
 - **Performance vs Scalability**
   - Service is scalable if resources added to system results in increased performance in a manner proportional to the resources added.
   - Performance problem if system is slow for a single user.
@@ -131,6 +126,33 @@
         - **Partition tables**: break up a table by putting hot spots in a seperate table to help keep it in memory.
         - **Tune the query cache**: in some cases the query cache could lead to performance issues.
     - [**More NoSQL patterns**](http://horicky.blogspot.com/2009/11/nosql-patterns.html)
+- **Cache**: improves page load time and can reduce the load on servers and databases. Dispatcher will first lookup if the request has been made before and try to find the previous result to return, in order to save the actual execution. Putting a cache can absorb uneven loads and spikes in traffic. It speeds up request, if data is accessed frequently store it in cache so it can be retrieved quickly.
+  - **Client caching**: can be located on the client side (OS or browser), server side, or in a distinct layer.
+  - **CDN caching**: CDNs are considered a type of cache
+  - **Web server caching**: reverse proxies and caches such as Varnish can serve static and dynamic content directly. Web servers can also cache requests, returning responses without having to contact application servers.
+  - **Database caching**: database usually includes some level of caching in a default configuration, optimized for a generic use case. Tweaking these settings for specific usage patterns can further boost performance.
+  - **Application caching**: In-memory caches such as Memcached and Redis are key-value stores between your application and your data storage. Since the data is held in RAM, it is much faster than typical databases where data is stored on disk. RAM is more limited than disk, so cache invalidation algorithms such as least recently used (LRU) can help invalidate 'cold' entries and keep 'hot' data in RAM Avoid file-based caching, as it makes cloning and auto-scaling more difficult. Cache can fall into two general categories: *database queries* and *objects*. These are row level, query-level, fully-formed serializable objects, fully-rendered HTML
+    - **Caching at the database query level**: whenever the database is queried, hash the query as a key and store the result to the cache. This approach suffers from expiration issues:
+      - Hard to delete a cached result with complex queries
+      - If one piece of data changes such as a table cell, you need to delete all cached queries that might include the changed cell
+    - **Caching at the object level**: see data as an object, similar to what is donw with application code. Application assembles the dataset from the database into a class instance or a data structure(s)
+      - Remove the object from cache if its underlying data has changed
+      - Allos for asynchronous processing: workers assemble objects by consuming the latest cached object
+  - Caching algorithms
+    - **Least Frequently Used(LFU)**: use counter to keep track of how often an entry is accessed. The entry with lowest count is removed first.
+    - **Least Recently Used(LRU)**: recently used items kept near top of the cache.
+    - **Most Recently Used(MRU)**: removes most recently used items first. Good when the older an item is the more likely it is to be accessed.
+    - **Adaptive Replacement Cache(ARC)**: keeps track of both LFU and LRU, as well as evicted cache entries to get the best use out of the available cache.
+  - When to update cache
+    - **Cache-aside**:
+    - **Write-through**:
+    - **Write-behind(write-back)**:
+    - **Refresh-ahead**:
+  - What to cache: user sessions, fully rendered web pages, activity streams, user graph data(user<->friend relationships)
+  - Disadvantages
+    - Need to maintain consistency between caches and the source of truth such as the database through cache invalidation.
+    - Cache invalidation is a difficult problem, there is additional complexity associated with when to update the cache.
+    - Need to make application changes such as adding Redis or memcached.
 - **Load Balancer**: distribute incoming client requests to computing resources such as application servers and database. Can be implemented with hardware (expensive) or with software such as HAProxy. It is common to set up multiple load balancers, either in *active-passive* or *active-active* mode. Can help with horizontal scaling, improving performance and availability.
   - Effective at
     - Preventing requests from going to unhealthy servers
