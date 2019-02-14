@@ -143,11 +143,39 @@
     - **Least Recently Used(LRU)**: recently used items kept near top of the cache.
     - **Most Recently Used(MRU)**: removes most recently used items first. Good when the older an item is the more likely it is to be accessed.
     - **Adaptive Replacement Cache(ARC)**: keeps track of both LFU and LRU, as well as evicted cache entries to get the best use out of the available cache.
-  - When to update cache
-    - **Cache-aside**:
-    - **Write-through**:
+  - **When to update cache**: only limited amount of data can be stored in cache, need to determine which update strategy is best.
+    - **Cache-aside**: application is responsible for reading and writing from storage. The cache does not interact with storage directly. Cache-aside is also referred to as lazy loading. Only requested data is cached, which avoids filling up the cache that is not requested.
+      - Process
+        - look for entry in cache, resulting in a cache miss
+        - load entry from the database
+        - add entry to cache
+        - return entry
+      - Disadvantages
+        - each cahce miss results in three trips, which can cause noticeable delay
+        - data can become stale if it is updated in the database. This issue is mitigated by setting a time-to-live (TTL) which forces an update of cache entry, or by using write-through.
+        - When a node fails, it is replaced by a new, empty node, increasing latency.
+    - **Write-through**: application uses the cache as the main data store, reading and writing data to it, while the cache is responsible for reading and writing to the database. Write-through is a slow overall operation due to the write operation, but subsequent reads of just written data are fast. Users are generally more tolerant of latency when updating data than reading data. Data in the cache is not stale.
+      - Process
+        - application adds/updates entry in cache
+        - cache synchronously writes entry to data store
+        - return entry
+      - Disadvantages
+        - When a new node is created due to failure or scaling, the new node will not cache entries until the entry is updated in the database. Cache-aside in conjunction with write through can mitigate this issue.
+        - Most data written might never be read, which can be minimized with a TTL.
     - **Write-behind(write-back)**:
-    - **Refresh-ahead**:
+      - Process
+        - Add/update entry in cache
+        - Asynchronously write entry to the data store, improving write performance
+      - Disadvantages
+        - There could be data loss if the cache goes down prior to its contents hitting the data store
+        - It is more complex to implement write-behind than it is to implement cache-aside or write through
+    - **Refresh-ahead**: can result in reduced latency vs read-through if the cache can accurately predict which items are likely to be needed in the future. Configure cache to automatically refresh any recently accessed cache entry prior to its expiration.
+      - Process
+        - Look for entry in cache
+        - If entry not present get info from database and store entry in cache
+        - Return entry
+      - Disadvantages
+        - Not accurately predicting which items are likely to be needed in the future can result in reduced performance than without refresh-ahead
   - What to cache: user sessions, fully rendered web pages, activity streams, user graph data(user<->friend relationships)
   - Disadvantages
     - Need to maintain consistency between caches and the source of truth such as the database through cache invalidation.
@@ -197,6 +225,7 @@
   - **Pull CDNs**: grab new content from server when the first user requests it. Leave content on the server and rewrite URLs to point to the CDN. Results in slower request until content is cached on the CDN. TTL determines how long content is cached.
     - Minimize storage space on the CDN, but can create redundant traffic if files expire and are pulled before they have actually changed.
     - Sites with heavy traffic work well, as traffic is spread out more evenly with only recently-requested content remaining on CDN.
+- **Asynchronism**
 - **Domain Name System (DNS)**: translates a domain name such as www.example.com to IP address. 
   - Disadvantages: slight delay, DNS server management could be complex (done by government, ISPs), Denial of Service(DDoS) attack
   - Services like CloudFlare can route traffics through various methods
@@ -243,3 +272,5 @@
 - graphql
 - redis
 - memcached
+- rabbitMQ
+- Amazon SQS
