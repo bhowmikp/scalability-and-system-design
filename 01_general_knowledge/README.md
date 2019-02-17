@@ -225,6 +225,15 @@
   - **Pull CDNs**: grab new content from server when the first user requests it. Leave content on the server and rewrite URLs to point to the CDN. Results in slower request until content is cached on the CDN. TTL determines how long content is cached.
     - Minimize storage space on the CDN, but can create redundant traffic if files expire and are pulled before they have actually changed.
     - Sites with heavy traffic work well, as traffic is spread out more evenly with only recently-requested content remaining on CDN.
+- **Communication**
+  - **OSI 7 layer model**: Open System Interconnection, model defines a networking framework for implementing protocols in seven layers
+    1. Physical: transmission of data using physical structures such as cables, hub etc.
+    2. Data Link: error free transmission of data frames from one node to another
+    3. Network: decides which physical path the data takes. Deals with packets
+    4. Transport: ensures messages are delivered error-free, in sequence, and with no losses or duplication. Includes TCP
+    5. Session: allows session establishment between processes running. Includes logical ports
+    6. Presentation: formats data to be presented to application layer. Encrypts and decrypts data
+    7. Application: serves the window for users and application processes to access network services.
 - **Asynchronism**: asynchronous workflows help reduce request times for expensive operations that would otherwise be performed in-line. They can also help by doing time-consuming work in advance, such as periodic aggregation of data.
   - **Message queues**: message queues receive, hold, and deliver messages. If an operation is too slow to perform inline, you can use a message queue.
     - The user is not blocked and the job is processed in the background. During this time, the client might optionally do a small amout of processing to make it seem like the task has completed. For example, if posting a tweet, the tweet could be instantly posted to your timeline, but it could take some time before your tweet is actually delivered to all of your followers.
