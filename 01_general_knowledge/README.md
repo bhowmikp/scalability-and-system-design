@@ -234,6 +234,13 @@
     5. Session: allows session establishment between processes running. Includes logical ports
     6. Presentation: formats data to be presented to application layer. Encrypts and decrypts data
     7. Application: serves the window for users and application processes to access network services.
+  - **Hypertext Transfer Protocol (HTTP)**
+    - **Hypertext Transfer Protocol Secure (HTTPS)**
+  - **Transmission Control Protocol (TCP)**
+  - **User Datagram Protocol (UDP)**
+  - **Remote Procedure Call (RPC)**
+  - **Representational State Transfer (REST)**
+  - **GraphQl**
 - **Asynchronism**: asynchronous workflows help reduce request times for expensive operations that would otherwise be performed in-line. They can also help by doing time-consuming work in advance, such as periodic aggregation of data.
   - **Message queues**: message queues receive, hold, and deliver messages. If an operation is too slow to perform inline, you can use a message queue.
     - The user is not blocked and the job is processed in the background. During this time, the client might optionally do a small amout of processing to make it seem like the task has completed. For example, if posting a tweet, the tweet could be instantly posted to your timeline, but it could take some time before your tweet is actually delivered to all of your followers.
@@ -265,6 +272,11 @@
   - **RAID 5**:  4-5 drives and one is used for redundancy. If one fails can be retrieved
   - **RAID 6**: 4-5 drives and one is used for redundancy. If 1-2 fails can be retrieved
   - **RAID 10**: four drives. Combination of Raid 0 and Raid 1, where it provides both striping and redundancy.
+- **Security**: is a broad topic but general ideas
+  - Encrypt in transit and at rest.
+  - Sanitize all user inputs or any input parameters exposed to user to prevent XSS and SQL injection.
+  - Use parameterized queries to prevent SQL injection.
+  - **Principle of least privilege**: every module must be able to access only the information and resources that are necessary for its legitimate purpose.
 
 ## Sources
 
