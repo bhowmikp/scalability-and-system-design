@@ -234,8 +234,15 @@
     5. Session: allows session establishment between processes running. Includes logical ports
     6. Presentation: formats data to be presented to application layer. Encrypts and decrypts data
     7. Application: serves the window for users and application processes to access network services.
-  - **Hypertext Transfer Protocol (HTTP)**
-    - **Hypertext Transfer Protocol Secure (HTTPS)**
+  - **Hypertext Transfer Protocol (HTTP)**: is a method for encoding and transporting data between a client and a server. It is a request/response protocol: clients issue requests and servers issue responses with relevant content and completion status info about the request.
+    - HTTP is an application layer protocol relying on lower-level protocols such as TCP and UDP.
+    - Common HTTP terms
+      - GET: Reads a resource
+      - POST: Creates a resource or trigger a process that handles data
+      - PUT: Creates or replace a resource
+      - PATCH: Partially updates a resource
+      - DELETE: Deletes a resource
+    - **Hypertext Transfer Protocol Secure (HTTPS)**: the secure version of HTTP. All communications between your browser and the website are encrypted.
   - **Transmission Control Protocol (TCP)**
   - **User Datagram Protocol (UDP)**
   - **Remote Procedure Call (RPC)**
