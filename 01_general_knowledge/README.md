@@ -243,7 +243,9 @@
       - PATCH: Partially updates a resource
       - DELETE: Deletes a resource
     - **Hypertext Transfer Protocol Secure (HTTPS)**: the secure version of HTTP. All communications between your browser and the website are encrypted.
-  - **Transmission Control Protocol (TCP)**
+  - **Transmission Control Protocol (TCP)**: connection-oriented protocol over an IP network. Connection is established using a handshake. All packets sent are guaranteed to reac the destination in the original order and without corruption. If the sender does not receive a correct response, it will resend the packets. If there are multiple timeouts, the connection is dropped. TCP also implements flow control and congestion control. These guarantees cause delays and generally result in less efficient transmission than UDP.
+    - Used: applications that require high reliability but are less time critical. Some examples include web servers, database info, SMTP, FTP, and SSH.
+    - TCP over UDP when: all the data needs to arrive intact, automatically make a best estimate use of the network throughput
   - **User Datagram Protocol (UDP)**
   - **Remote Procedure Call (RPC)**
   - **Representational State Transfer (REST)**
