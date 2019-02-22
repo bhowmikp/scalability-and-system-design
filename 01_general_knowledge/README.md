@@ -246,7 +246,9 @@
   - **Transmission Control Protocol (TCP)**: connection-oriented protocol over an IP network. Connection is established using a handshake. All packets sent are guaranteed to reac the destination in the original order and without corruption. If the sender does not receive a correct response, it will resend the packets. If there are multiple timeouts, the connection is dropped. TCP also implements flow control and congestion control. These guarantees cause delays and generally result in less efficient transmission than UDP.
     - Used: applications that require high reliability but are less time critical. Some examples include web servers, database info, SMTP, FTP, and SSH.
     - TCP over UDP when: all the data needs to arrive intact, automatically make a best estimate use of the network throughput
-  - **User Datagram Protocol (UDP)**
+  - **User Datagram Protocol (UDP)**: is connectionless. Datagrams (analogous to packets) are guaranteed only at the datagram level. Datagrams might reach their destination out of order or not at all. UDP does not support congestion control. Without the guarantees that TCP support, UDP is generally more efficient.
+    - UDP is less reliable but works well in real time use cases such as VoIP, video chat, streaming, and realtime multiplayer games.
+    - UDP over TCP when: need the lowest latency, late data is worse than loss of data, want to implement own error correction
   - **Remote Procedure Call (RPC)**
   - **Representational State Transfer (REST)**
   - **GraphQl**
